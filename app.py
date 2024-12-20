@@ -6,8 +6,7 @@ import base64
 import hashlib
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key-here'  
-genai.configure(api_key='AIzaSyDQI0dSMeduv-yb95tfxwBfHJ1pJVP2Fc4')
+genai.configure(api_key='YOUR GEMINI API KEY')
 model = genai.GenerativeModel('gemini-2.0-flash-exp')
 
 INITIAL_ANALYSIS_PROMPT = """Please analyze this investment portfolio image by summarizing the visual details. Extract and organize the following information explicitly present in the image:
