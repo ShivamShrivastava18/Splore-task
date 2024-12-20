@@ -6,11 +6,10 @@ import base64
 import hashlib
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key-here'  # Required for session management
+app.secret_key = 'your-secret-key-here'  
 genai.configure(api_key='AIzaSyDQI0dSMeduv-yb95tfxwBfHJ1pJVP2Fc4')
 model = genai.GenerativeModel('gemini-2.0-flash-exp')
 
-# Initial analysis prompt
 INITIAL_ANALYSIS_PROMPT = """Please analyze this investment portfolio image by summarizing the visual details. Extract and organize the following information explicitly present in the image:
 
 1. **Portfolio Overview**:
@@ -57,34 +56,25 @@ def index():
 @app.route('/generate', methods=['POST'])
 def generate():
     try:
-        # Get image data and user prompt
         image_data = request.form.get('image', '')
         user_prompt = request.form.get('prompt', '').strip()
         
-        # If there's image data, process it
         if image_data:
-            # Decode base64 image
             image_binary = base64.b64decode(image_data.split(',')[1])
             
-            # Generate hash of the image
             current_image_hash = get_image_hash(image_binary)
             
-            # Check if this is a new image
             if 'last_image_hash' not in session or session['last_image_hash'] != current_image_hash:
-                # Clear previous analysis for new image
                 session.pop('portfolio_data', None)
                 session['last_image_hash'] = current_image_hash
             
-            # Process the image
             img = Image.open(io.BytesIO(image_binary))
             
-            # Generate initial analysis if needed
             if 'portfolio_data' not in session:
                 response = model.generate_content([INITIAL_ANALYSIS_PROMPT, img])
                 initial_analysis = response.text
                 session['portfolio_data'] = initial_analysis
                 
-                # If there's a specific question, address it
                 if user_prompt:
                     follow_up = model.generate_content(
                         FOLLOWUP_PROMPT.format(
@@ -96,7 +86,6 @@ def generate():
                 
                 return jsonify({'response': initial_analysis})
         
-        # Handle follow-up questions for existing analysis
         if 'portfolio_data' in session and user_prompt:
             response = model.generate_content(
                 FOLLOWUP_PROMPT.format(
@@ -106,14 +95,12 @@ def generate():
             )
             return jsonify({'response': response.text})
         
-        # If no image and no stored analysis, return error
         if 'portfolio_data' not in session:
             return jsonify({
                 'error': 'Please upload an image first',
                 'status': 'error'
             }), 400
             
-        # Return stored analysis if no specific prompt
         return jsonify({'response': session['portfolio_data']})
             
     except Exception as e:
@@ -124,7 +111,6 @@ def generate():
 
 @app.route('/reset', methods=['POST'])
 def reset_analysis():
-    # Clear all session data
     session.clear()
     return jsonify({'status': 'success'})
 
